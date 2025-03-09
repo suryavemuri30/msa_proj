@@ -204,6 +204,3 @@ eureka.client.service-url.defaultZone=http://localhost:8761/eureka
 mvn clean install
 ```
 
----
-
-Let me know if this covers everything or if you need more details!
