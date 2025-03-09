@@ -1,6 +1,4 @@
-Here's the updated README with the new additions:
 
----
 
 # Microservices Project - Product, Inventory, and Order Management
 
