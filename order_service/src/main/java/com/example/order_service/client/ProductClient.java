@@ -1,12 +1,12 @@
 package com.example.order_service.client;
 
-import com.example.product.model.Product;
+import com.example.order_service.dto.ProductInfo;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@FeignClient(name = "product-service", url = "http://localhost:8080/products")
+@FeignClient(name = "product-service")
 public interface ProductClient {
-    @GetMapping("/sku/{skuCode}")
-    Product getProductBySkuCode(@PathVariable("skuCode") String skuCode);
+    @GetMapping("/products/sku/{skuCode}")
+    ProductInfo getProductBySkuCode(@PathVariable("skuCode") String skuCode);
 }

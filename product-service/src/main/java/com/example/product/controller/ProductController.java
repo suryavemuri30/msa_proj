@@ -45,11 +45,11 @@ public class ProductController {
   public Product getProductBySkuCode(@PathVariable String skuCode) {
     return productService
       .getProductBySkuCode(skuCode)
-      .orElseThrow(
-        () ->
-          new ProductNotFoundException(
-            "Product with SKU Code " + skuCode + " not found!"
-          )
+            .orElseThrow(
+                    () ->
+                            new IllegalArgumentException( // <-- Changed exception type
+                                    "Product with SKU Code " + skuCode + " not found!"
+                            )
       );
   }
 }

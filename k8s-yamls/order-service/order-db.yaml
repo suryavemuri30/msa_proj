@@ -1,0 +1,73 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: order-db-secret # Keep the name consistent for potential later changes
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: root # <-- CHANGE THIS!
+  MYSQL_DATABASE: order_db # Database name order-service will use
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: order-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi # Adjust size as needed
+  # storageClassName: your-storage-class
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-db
+  template:
+    metadata:
+      labels:
+        app: order-db
+    spec:
+      containers:
+        - name: mysql-order
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            # Only root password and database name are needed for initialization
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: order-db-secret
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: mysql-persistent-storage-order
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage-order
+          persistentVolumeClaim:
+            claimName: order-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-db # This is the hostname order-service will use
+spec:
+  selector:
+    app: order-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP

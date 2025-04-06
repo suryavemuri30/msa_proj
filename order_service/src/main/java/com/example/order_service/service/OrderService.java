@@ -51,10 +51,10 @@ package com.example.order_service.service;
 
 import com.example.order_service.client.InventoryClient;
 import com.example.order_service.client.ProductClient;
+import com.example.order_service.dto.ProductInfo;
 import com.example.order_service.model.Order;
 import com.example.order_service.repository.OrderRepository;
-import com.example.product.exception.ProductNotFoundException;
-import com.example.product.model.Product;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -86,9 +86,9 @@ public class OrderService {
     public Order saveOrder(Order order) {
 
 
-        Product product = productClient.getProductBySkuCode(order.getSkuCode());
+        ProductInfo product = productClient.getProductBySkuCode(order.getSkuCode());
         if (product == null) {
-            throw new ProductNotFoundException("Product with SKU Code " + order.getSkuCode() + " not found!");
+            throw new IllegalArgumentException("Product with SKU Code " + order.getSkuCode() + " not found!");
         }
 
         // Check if there is enough stock before saving the order

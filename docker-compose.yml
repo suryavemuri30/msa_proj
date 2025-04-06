@@ -1,0 +1,129 @@
+version: '3.8'
+
+networks:
+  msa-network:
+
+services:
+  eureka-server:
+    build: ./eurekaserver
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - msa-network
+    environment:
+      - EUREKA_CLIENT_REGISTER_WITH_EUREKA=false
+      - EUREKA_CLIENT_FETCH_REGISTRY=false
+
+  api-gateway:
+    build: ./ApiGateway
+    container_name: api-gateway
+    ports:
+      - "8084:8084"
+    depends_on:
+      - eureka-server
+    networks:
+      - msa-network
+    environment:
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+
+  product-service:
+    build: ./product-service
+    container_name: product-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - product-db
+    networks:
+      - msa-network
+    environment:
+      - SPRING_APPLICATION_NAME=product-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://product-db:3306/product_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  order-service:
+    build: ./order_service
+    container_name: order-service
+    ports:
+      - "8081:8081"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - order-db
+    networks:
+      - msa-network
+    environment:
+      - SPRING_APPLICATION_NAME=order-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://order-db:3306/order_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  inventory-service:
+    build: ./inventory-service
+    container_name: inventory-service
+    ports:
+      - "8082:8082"
+    depends_on:
+      - eureka-server
+      - api-gateway
+      - inventory-db
+    networks:
+      - msa-network
+    environment:
+      - SPRING_APPLICATION_NAME=inventory-service
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka
+      - SPRING_DATASOURCE_URL=jdbc:mysql://inventory-db:3306/inventory_db
+      - SPRING_DATASOURCE_USERNAME=root
+      - SPRING_DATASOURCE_PASSWORD=root
+
+  product-db:
+    image: mysql:8
+    container_name: product-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=product_db
+    ports:
+      - "3307:3306"
+    networks:
+      - msa-network
+    volumes:
+      - product_data:/var/lib/mysql
+
+  order-db:
+    image: mysql:8
+    container_name: order-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=order_db
+    ports:
+      - "3308:3306"
+    networks:
+      - msa-network
+    volumes:
+      - order_data:/var/lib/mysql
+
+  inventory-db:
+    image: mysql:8
+    container_name: inventory-db
+    restart: always
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=inventory_db
+    ports:
+      - "3309:3306"
+    networks:
+      - msa-network
+    volumes:
+      - inventory_data:/var/lib/mysql
+
+volumes:
+  product_data:
+  order_data:
+  inventory_data:

@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: product-db-secret
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: root # <-- CHANGE THIS!
+  MYSQL_DATABASE: product_db # Database name product-service will use
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: product-db-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi # Adjust size as needed
+  # storageClassName: your-storage-class
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-db-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: product-db
+  template:
+    metadata:
+      labels:
+        app: product-db
+    spec:
+      containers:
+        - name: mysql-product
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: product-db-secret
+                  key: MYSQL_ROOT_PASSWORD
+            - name: MYSQL_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: product-db-secret
+                  key: MYSQL_DATABASE
+          volumeMounts:
+            - name: mysql-persistent-storage-product
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: mysql-persistent-storage-product
+          persistentVolumeClaim:
+            claimName: product-db-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-db # This is the hostname product-service will use
+spec:
+  selector:
+    app: product-db
+  ports:
+    - protocol: TCP
+      port: 3306
+      targetPort: 3306
+  type: ClusterIP
